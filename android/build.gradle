@@ -1,0 +1,27 @@
+apply plugin: "com.android.application"
+
+android {
+    compileSdkVersion 33
+    defaultConfig {
+        applicationId "com.shooter3d.android"
+        minSdkVersion 19
+        targetSdkVersion 33
+        versionCode 1
+        versionName "1.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation project(":core")
+    implementation "com.badlogicgames.gdx:gdx-backend-android:$gdxVersion"
+    implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi-v7a"
+    implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-arm64-v8a"
+    implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86"
+    implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86_64"
+}
