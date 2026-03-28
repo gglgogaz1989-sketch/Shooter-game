@@ -1,11 +1,13 @@
-name: Android Build
+name: Android Build & Release
 
 on:
   push:
     branches: [ "main", "master" ]
+    tags:
+      - 'v*'  # Запуск при создании тега v1.0.0, v1.0.1 и т.д.
   pull_request:
     branches: [ "main", "master" ]
-  workflow_dispatch:
+  workflow_dispatch:  # Ручной запуск
 
 jobs:
   build:
@@ -13,10 +15,10 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v3
       
     - name: Set up JDK 11
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v3
       with:
         java-version: '11'
         distribution: 'temurin'
@@ -27,30 +29,89 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
       
+    - name: Get version name from tag
+      id: get_version
+      run: |
+        if [[ $GITHUB_REF == refs/tags/v* ]]; then
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "is_tag=true" >> $GITHUB_OUTPUT
+        else
+          echo "version=dev-${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+          echo "is_tag=false" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Update version in build.gradle
+      run: |
+        VERSION_NAME="${{ steps.get_version.outputs.version }}"
+        # Генерируем versionCode из даты и версии
+        VERSION_CODE=$(date +%Y%m%d%H%M%S)
+        if [[ "${{ steps.get_version.outputs.is_tag }}" == "true" ]]; then
+          # Для релизов versionCode = 10000 + номер версии
+          VERSION_CODE=$(echo "$VERSION_NAME" | awk -F. '{print $1*10000 + $2*100 + $3}')
+        fi
+        echo "Version: $VERSION_NAME ($VERSION_CODE)"
+        
+        # Обновляем android/build.gradle
+        sed -i "s/versionCode [0-9]*/versionCode $VERSION_CODE/" android/build.gradle
+        sed -i "s/versionName \".*\"/versionName \"$VERSION_NAME\"/" android/build.gradle
+        
     - name: Build Debug APK
       run: ./gradlew android:assembleDebug
       
-    - name: Upload Debug APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: Shooter3D-debug
-        path: android/build/outputs/apk/debug/*.apk
-        
-    - name: Decode Keystore
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-      run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > keystore.jks
-      
     - name: Build Release APK
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
       run: ./gradlew android:assembleRelease
-      env:
-        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        
-    - name: Upload Release APK
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      
+    - name: Upload Debug APK (artifact)
       uses: actions/upload-artifact@v3
       with:
-        name: Shooter3D-release
+        name: Shooter3D-debug-${{ steps.get_version.outputs.version }}
+        path: android/build/outputs/apk/debug/*.apk
+        
+    - name: Upload Release APK (artifact)
+      uses: actions/upload-artifact@v3
+      with:
+        name: Shooter3D-release-${{ steps.get_version.outputs.version }}
         path: android/build/outputs/apk/release/*.apk
+        
+    # Создаём релиз на GitHub (только для тегов)
+    - name: Create GitHub Release
+      if: steps.get_version.outputs.is_tag == 'true'
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ steps.get_version.outputs.version }}
+        name: Release v${{ steps.get_version.outputs.version }}
+        body: |
+          ## Shooter3D - Snow Shelter
+          
+          ### Что нового:
+          - Автоматическая сборка через GitHub Actions
+          - Поддержка автообновления
+          
+          ### Установка:
+          1. Скачай APK ниже
+          2. Разреши установку из неизвестных источников
+          3. Установи и играй!
+          
+          ### Скачать:
+          - [APK для Android](https://github.com/${{ github.repository }}/releases/download/v${{ steps.get_version.outputs.version }}/Shooter3D-v${{ steps.get_version.outputs.version }}.apk)
+        files: |
+          android/build/outputs/apk/release/*.apk
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    # Для ручных сборок (workflow_dispatch) — загружаем APK как артефакт с версией
+    - name: Rename APK for manual build
+      if: steps.get_version.outputs.is_tag == 'false'
+      run: |
+        cp android/build/outputs/apk/release/*.apk Shooter3D-${{ steps.get_version.outputs.version }}.apk
+        cp android/build/outputs/apk/debug/*.apk Shooter3D-debug-${{ steps.get_version.outputs.version }}.apk
+        
+    - name: Upload manual build APK
+      if: steps.get_version.outputs.is_tag == 'false'
+      uses: actions/upload-artifact@v3
+      with:
+        name: Shooter3D-${{ steps.get_version.outputs.version }}
+        path: Shooter3D-*.apk
