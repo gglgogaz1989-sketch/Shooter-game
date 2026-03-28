@@ -10,8 +10,11 @@ public class DesktopLauncher {
         config.setTitle("Shooter3D - Snow Shelter");
         config.setWindowedMode(800, 800);
         config.setResizable(false);
-        config.setForegroundFPS(120);
+        config.setForegroundFPS(90);
         config.useVsync(true);
+        
+        // Одна иконка для десктопа
+        config.setWindowIcon("icon.png");
         
         new Lwjgl3Application(new GameMain(), config);
     }
