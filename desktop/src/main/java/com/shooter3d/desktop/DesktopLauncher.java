@@ -8,11 +8,8 @@ public class DesktopLauncher {
     public static void main(String[] args) {
         Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
         config.setTitle("Shooter3D - Snow Shelter");
-        
-        // Квадратный режим 1:1 (перевёрнутый стиль)
         config.setWindowedMode(800, 800);
-        config.setResizable(false);  // Запрещаем изменение размера для сохранения пропорций
-        
+        config.setResizable(false);
         config.setForegroundFPS(120);
         config.useVsync(true);
         
