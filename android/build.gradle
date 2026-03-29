@@ -1,7 +1,7 @@
 apply plugin: "com.android.application"
 
-// Версия LibGDX (должна совпадать с корневой)
-ext.gdxVersion = '1.12.1'
+// Просто объявляем переменную
+def gdxVersion = '1.12.1'
 
 android {
     compileSdkVersion 33
