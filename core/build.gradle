@@ -1,5 +1,8 @@
 apply plugin: "java-library"
 
+// Версия LibGDX
+def gdxVersion = project.hasProperty('gdxVersion') ? project.gdxVersion : '1.12.1'
+
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
