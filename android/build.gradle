@@ -1,11 +1,9 @@
 apply plugin: "com.android.application"
 
-ext {
-    gdxVersion = '1.12.1'
-}
-
 android {
+    namespace 'com.shooter3d.android'
     compileSdk 33
+
     defaultConfig {
         applicationId "com.shooter3d.android"
         minSdk 19
@@ -13,6 +11,7 @@ android {
         versionCode 1
         versionName "1.0.0"
     }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -23,12 +22,12 @@ android {
 
 dependencies {
     implementation project(":core")
-    implementation "com.badlogicgames.gdx:gdx-backend-android:$gdxVersion"
-    implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi-v7a"
-    implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-arm64-v8a"
-    implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86"
-    implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86_64"
-    
+    implementation "com.badlogicgames.gdx:gdx-backend-android:1.12.1"
+    implementation "com.badlogicgames.gdx:gdx-platform:1.12.1:natives-armeabi-v7a"
+    implementation "com.badlogicgames.gdx:gdx-platform:1.12.1:natives-arm64-v8a"
+    implementation "com.badlogicgames.gdx:gdx-platform:1.12.1:natives-x86"
+    implementation "com.badlogicgames.gdx:gdx-platform:1.12.1:natives-x86_64"
+
     implementation "androidx.core:core:1.9.0"
     implementation "androidx.appcompat:appcompat:1.6.1"
 }
